@@ -81,6 +81,49 @@ echo 'export STATUSLINE_LABEL=MYLABEL' >> ~/.zshrc   # or ~/.bashrc
 $env:STATUSLINE_LABEL = "MYLABEL"; node /path/to/statusline.cjs
 ```
 
+## Extend it — add your own segment
+
+The statusline is built from an array of **segments** in `statusline.cjs`. Each
+segment is a function that returns its rendered string, or `''` to be omitted.
+Segments are joined left-to-right by the `│` divider, so a hidden one never
+leaves a dangling separator.
+
+To add a status, append a function to the array in `buildSegments(...)` (look for
+the `── add new statuses here ──` marker). Array order is display order.
+
+**Example — show the current directory:**
+
+```js
+function buildSegments({ git, modelName, ctxInfo, costInfo, duration }) {
+  return [
+    // ...existing segments...
+    () => costInfo && costInfo.costUsd > 0
+        ? c.brightYellow + '$' + costInfo.costUsd.toFixed(2) + c.reset : '',
+    // ── add new statuses here ──
+    () => c.dim + '⊙ ' + path.basename(CWD) + c.reset,   // ← new segment
+  ];
+}
+```
+
+That's it — `path`, `CWD`, and the `c` color table are already in scope.
+
+**If your segment needs new data**, write a small collector and thread it
+through the object passed to `buildSegments`. For example, a clock:
+
+```js
+// 1. add to generateStatusline(), alongside the other collectors:
+const now = new Date().toTimeString().slice(0, 5);   // "14:32"
+
+// 2. pass it in:
+buildSegments({ git, modelName, ctxInfo, costInfo, duration, now })
+
+// 3. consume it in buildSegments({ ..., now }):
+() => c.cyan + '🕑 ' + now + c.reset,
+```
+
+Available colors live in the `c` object near the top of the file (`c.red`,
+`c.brightGreen`, `c.dim`, …); always close a colored span with `c.reset`.
+
 ## Run it standalone
 
 ```bash

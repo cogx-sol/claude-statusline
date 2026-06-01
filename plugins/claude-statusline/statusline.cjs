@@ -213,42 +213,63 @@ function getCostFromStdin() {
 
 // ─── rendering ──────────────────────────────────────────────────
 
+// Renders the git branch block (branch name + change/ahead-behind indicators)
+// as a single string, or '' when not in a repo.
+function renderGit(git) {
+  if (!git.gitBranch) return '';
+  let out = c.brightBlue + '⏇ ' + git.gitBranch + c.reset;
+  if (git.modified + git.staged + git.untracked > 0) {
+    let ind = '';
+    if (git.staged > 0)    ind += c.brightGreen  + '+' + git.staged    + c.reset;
+    if (git.modified > 0)  ind += c.brightYellow + '~' + git.modified  + c.reset;
+    if (git.untracked > 0) ind += c.dim          + '?' + git.untracked + c.reset;
+    out += ' ' + ind;
+  }
+  if (git.ahead > 0)  out += ' ' + c.brightGreen + '↑' + git.ahead + c.reset;
+  if (git.behind > 0) out += ' ' + c.brightRed   + '↓' + git.behind + c.reset;
+  return out;
+}
+
+// Each segment is a function returning its rendered string, or '' to be
+// omitted. Segments are joined left-to-right by `sep`, so a hidden segment
+// never leaves a dangling divider. To add a new status, append a function
+// here — order in the array is display order.
+//
+// Example — current directory:
+//   () => c.dim + path.basename(CWD) + c.reset,
+function buildSegments({ git, modelName, ctxInfo, costInfo, duration }) {
+  return [
+    // Banner + user — the leading segment carries no divider before it.
+    () => c.bold + c.brightPurple + '▊ ' + BANNER_LABEL + ' ' + c.reset
+        + c.brightCyan + git.name + c.reset,
+    () => renderGit(git),
+    () => c.purple + modelName + c.reset,
+    () => duration ? c.cyan + '⏱ ' + duration + c.reset : '',
+    () => {
+      if (!ctxInfo || ctxInfo.usedPct <= 0) return '';
+      const col = ctxInfo.usedPct >= 90 ? c.brightRed
+                : ctxInfo.usedPct >= 70 ? c.brightYellow : c.brightGreen;
+      return col + '● ' + ctxInfo.usedPct + '% ctx' + c.reset;
+    },
+    () => costInfo && costInfo.costUsd > 0
+        ? c.brightYellow + '$' + costInfo.costUsd.toFixed(2) + c.reset : '',
+    // ── add new statuses here ──
+  ];
+}
+
 function generateStatusline() {
   const git = getGitInfo();
   const modelName = getModelFromStdin() || getModelName();
   const ctxInfo = getContextFromStdin();
   const costInfo = getCostFromStdin();
   const session = getSessionStats();
-
-  let header = c.bold + c.brightPurple + '▊ ' + BANNER_LABEL + ' ' + c.reset;
-  header += c.brightCyan + git.name + c.reset;
-  if (git.gitBranch) {
-    header += '  ' + c.dim + '│' + c.reset + '  ' + c.brightBlue + '⏇ ' + git.gitBranch + c.reset;
-    const changes = git.modified + git.staged + git.untracked;
-    if (changes > 0) {
-      let ind = '';
-      if (git.staged > 0)    ind += c.brightGreen  + '+' + git.staged    + c.reset;
-      if (git.modified > 0)  ind += c.brightYellow + '~' + git.modified  + c.reset;
-      if (git.untracked > 0) ind += c.dim          + '?' + git.untracked + c.reset;
-      header += ' ' + ind;
-    }
-    if (git.ahead > 0)  header += ' ' + c.brightGreen + '↑' + git.ahead + c.reset;
-    if (git.behind > 0) header += ' ' + c.brightRed   + '↓' + git.behind + c.reset;
-  }
-  header += '  ' + c.dim + '│' + c.reset + '  ' + c.purple + modelName + c.reset;
-
   const duration = costInfo ? costInfo.duration : session.duration;
-  if (duration) header += '  ' + c.dim + '│' + c.reset + '  ' + c.cyan + '⏱ ' + duration + c.reset;
 
-  if (ctxInfo && ctxInfo.usedPct > 0) {
-    const ctxColor = ctxInfo.usedPct >= 90 ? c.brightRed : ctxInfo.usedPct >= 70 ? c.brightYellow : c.brightGreen;
-    header += '  ' + c.dim + '│' + c.reset + '  ' + ctxColor + '● ' + ctxInfo.usedPct + '% ctx' + c.reset;
-  }
-  if (costInfo && costInfo.costUsd > 0) {
-    header += '  ' + c.dim + '│' + c.reset + '  ' + c.brightYellow + '$' + costInfo.costUsd.toFixed(2) + c.reset;
-  }
-
-  return header;
+  const sep = '  ' + c.dim + '│' + c.reset + '  ';
+  return buildSegments({ git, modelName, ctxInfo, costInfo, duration })
+    .map((fn) => fn())
+    .filter(Boolean)
+    .join(sep);
 }
 
 function generateJSON() {
