@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-statusline",
+  "description": "Minimal Claude Code statusline plugin marketplace (single-plugin)",
+  "owner": {
+    "name": "Sebastien",
+    "email": "sebastien@cognitivex.com"
+  },
+  "plugins": [
+    {
+      "name": "claude-statusline",
+      "description": "Single-line Claude Code statusline: configurable banner via $STATUSLINE_LABEL, live model name from session payload, git status indicators, session duration, context %, and cost.",
+      "author": {
+        "name": "Sebastien",
+        "email": "sebastien@cognitivex.com"
+      },
+      "category": "ui",
+      "source": "./plugins/claude-statusline",
+      "homepage": "https://github.com/cogx-sol/claude-statusline"
+    }
+  ]
+}
