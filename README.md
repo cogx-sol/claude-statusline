@@ -22,13 +22,23 @@ Status indicators: `+N` staged, `~N` modified, `?N` untracked, `↑N` ahead of u
 
 ## Install
 
-1. **Add the plugin** in Claude Code:
+Claude Code installs plugins through marketplaces. A single-plugin repo (like this one) acts as an implicit one-plugin marketplace, so the flow is:
+
+1. **Add the repo as a marketplace** in Claude Code:
 
    ```
-   /plugin install https://github.com/cogx-sol/claude-statusline.git
+   /plugin marketplace add https://github.com/cogx-sol/claude-statusline.git
    ```
 
-2. **Wire it into your settings** by running the bundled setup command:
+2. **Install the plugin from it:**
+
+   ```
+   /plugin install claude-statusline@claude-statusline
+   ```
+
+   (`<plugin-name>@<marketplace-name>` — both are `claude-statusline` here because the marketplace name is derived from the repo name.)
+
+3. **Wire it into your settings** by running the bundled setup command:
 
    ```
    /claude-statusline:setup
