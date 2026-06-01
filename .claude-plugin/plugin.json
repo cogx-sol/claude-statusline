@@ -1,0 +1,11 @@
+{
+  "name": "claude-statusline",
+  "description": "Minimal single-line Claude Code statusline. Customizable banner via $STATUSLINE_LABEL, dynamic model name from the session payload, git branch + status indicators (modified/staged/untracked, ahead/behind), session duration, context %, and cost. No swarm/DDD/CVE clutter.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Sebastien",
+    "email": "sebastien@cognitivex.com"
+  },
+  "homepage": "https://github.com/cogx-sol/claude-statusline",
+  "license": "MIT"
+}
